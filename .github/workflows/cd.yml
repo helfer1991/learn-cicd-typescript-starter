@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   deploy:
     name: Deploy
@@ -23,3 +27,16 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/933471466862/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
+          service_account: "cloud-run-deployer@notely-479216.iam.gserviceaccount.com"
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build and Push Docker image
+        run: |
+          gcloud builds submit --tag us-central1-docker.pkg.dev/notely-479216/notely-ar-repo/notely:latest .
